@@ -55,9 +55,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ${{ env.MOZBUILD_PATH }}
-          key: ${{ runner.os }}-mozbuild-${{ hashFiles('**/Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-mozbuild-
+          key: ${{ runner.os }}-mozbuild-always
 
       - name: Setup and bootstrap
         run: |
@@ -68,14 +66,11 @@ jobs:
       - name: Build Linux
         run: python3 ./multibuild.py --target linux --arch x86_64
 
-      - name: Build Windows
-        run: python3 ./multibuild.py --target windows --arch x86_64
-
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
         with:
           path: ${{ env.MOZBUILD_PATH }}
-          key: ${{ runner.os }}-mozbuild-${{ hashFiles('**/Makefile') }}
+          key: ${{ runner.os }}-mozbuild-always
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
