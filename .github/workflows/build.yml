@@ -66,13 +66,21 @@ jobs:
           make mozbootstrap
           mkdir -p dist
 
+      - name: Set memory limit for builds
+        run: |
+          total_mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+          mem_limit_kb=$(echo "$total_mem_kb * 0.8" | bc | awk '{print int($1+0.5)}')
+          MEMORY_LIMIT="${mem_limit_kb}K"
+
       - name: Build Linux
         run: |
-          python3 ./multibuild.py --target linux --arch x86_64
+          systemd-run --user --scope -p MemoryLimit=${MEMORY_LIMIT} \
+            python3 ./multibuild.py --target linux --arch x86_64
 
       - name: Build Windows
         run: |
-          python3 ./multibuild.py --target windows --arch x86_64
+          systemd-run --user --scope -p MemoryLimit=${MEMORY_LIMIT} \
+            python3 ./multibuild.py --target windows --arch x86_64
 
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
