@@ -13,6 +13,17 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+
       - uses: actions/checkout@v2
 
       - name: Set up Go
@@ -43,14 +54,6 @@ jobs:
           key: ${{ runner.os }}-mozbuild-${{ hashFiles('**/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-mozbuild-
-
-      - name: Create swap space
-        run: |
-          sudo fallocate -l 10G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          sudo swapon --show
 
       - name: Setup and bootstrap
         run: |
