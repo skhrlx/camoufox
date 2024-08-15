@@ -44,15 +44,15 @@ jobs:
           make mozbootstrap
           mkdir -p dist
 
+      - name: Build
+        run: |
+          python3 ./multibuild.py --target linux windows macos --arch x86_64
+
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
         with:
           path: ${{ env.MOZBUILD_PATH }}
           key: ${{ runner.os }}-mozbuild-${{ hashFiles('**/Makefile') }}
-
-      - name: Build
-        run: |
-          python3 ./multibuild.py --target linux windows macos --arch x86_64
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
