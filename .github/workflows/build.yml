@@ -25,6 +25,11 @@ jobs:
           remove-docker-images: "true"
 
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Check disk space
+        run: df -h
 
       - name: Set up Go
         uses: actions/setup-go@v2
