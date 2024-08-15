@@ -14,15 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Maximize build space
-        uses: easimon/maximize-build-space@v10
+        uses: AdityaGarg8/remove-unwanted-software@v4.1
         with:
-          root-reserve-mb: 10240
-          swap-size-mb: 10240
           remove-dotnet: "true"
           remove-android: "true"
           remove-haskell: "true"
           remove-codeql: "true"
           remove-docker-images: "true"
+          verbose: "false"
 
       - uses: actions/checkout@v2
         with:
@@ -66,26 +65,11 @@ jobs:
           make mozbootstrap
           mkdir -p dist
 
-      - name: Set memory limit for builds
-        run: |
-          total_mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-          mem_limit_kb=$(echo "$total_mem_kb * 0.75" | bc | awk '{print int($1+0.5)}')
-          MEMORY_LIMIT="${mem_limit_kb}K"      
-          CPU_QUOTA="75%"
-
       - name: Build Linux
-        run: |
-          systemd-run --user --scope \
-            -p MemoryLimit=${MEMORY_LIMIT} \
-            -p CPUQuota=${CPU_QUOTA} \
-            python3 ./multibuild.py --target linux --arch x86_64
+        run: python3 ./multibuild.py --target linux --arch x86_64
 
       - name: Build Windows
-        run: |
-          systemd-run --user --scope \
-            -p MemoryLimit=${MEMORY_LIMIT} \
-            -p CPUQuota=${CPU_QUOTA} \
-            python3 ./multibuild.py --target linux --arch x86_64
+        run: python3 ./multibuild.py --target windows --arch x86_64
 
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
