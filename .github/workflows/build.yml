@@ -9,9 +9,8 @@ env:
   MOZBUILD_PATH: ${{ github.workspace }}/.mozbuild
 
 jobs:
-  build:
+  run:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
@@ -24,6 +23,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.11"
+
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: x64
 
       - name: Install dependencies
         run: |
@@ -38,15 +43,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mozbuild-
 
+      - name: Create swap space
+        run: |
+          sudo fallocate -l 10G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show
+
       - name: Setup and bootstrap
         run: |
           make setup-minimal
           make mozbootstrap
           mkdir -p dist
 
-      - name: Build
+      - name: Build Linux
         run: |
-          python3 ./multibuild.py --target linux windows macos --arch x86_64
+          python3 ./multibuild.py --target linux --arch x86_64
+
+      - name: Build Windows
+        run: |
+          python3 ./multibuild.py --target windows --arch x86_64
 
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
