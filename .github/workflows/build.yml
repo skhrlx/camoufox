@@ -24,7 +24,26 @@ jobs:
           remove-haskell: "true"
           remove-codeql: "true"
           remove-docker-images: "true"
+          remove-cached-tools: "true"
+          remove-swapfile: "true"
           verbose: "false"
+
+      - name: Remove unwanted tools
+        # Originally from here: https://github.com/AdityaGarg8/remove-unwanted-software/blob/master/action.yml
+        # Modified to keep llvm.
+        run: |
+          sudo apt-get remove -y '^aspnetcore-.*' > /dev/null
+          sudo apt-get remove -y '^dotnet-.*' > /dev/null
+          sudo apt-get remove -y 'php.*' > /dev/null
+          sudo apt-get remove -y '^mongodb-.*' > /dev/null
+          sudo apt-get remove -y '^mysql-.*' > /dev/null
+          sudo apt-get remove -y azure-cli google-chrome-stable firefox ${POWERSHELL} mono-devel libgl1-mesa-dri --fix-missing > /dev/null
+          if [[ (${CODENAME} = focal) || (${CODENAME} = jammy) ]]; then
+            sudo apt-get remove -y google-cloud-sdk --fix-missing > /dev/null
+            sudo apt-get remove -y google-cloud-cli --fix-missing > /dev/null
+          fi
+          sudo apt-get autoremove -y > /dev/null
+          sudo apt-get clean > /dev/null
 
       - uses: actions/checkout@v2
         with:
@@ -72,7 +91,7 @@ jobs:
 
       - name: Create swap space
         run: |
-          sudo fallocate -l 20G /swapfile
+          sudo fallocate -l 16G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
