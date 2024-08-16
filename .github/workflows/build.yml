@@ -70,6 +70,14 @@ jobs:
         run: |
           ls -R ~/.mozbuild
 
+      - name: Create swap space
+        run: |
+          sudo fallocate -l 20G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: Build
         run: python3 ./multibuild.py --target ${{ matrix.target }} --arch x86_64
 
