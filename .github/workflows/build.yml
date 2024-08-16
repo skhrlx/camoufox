@@ -6,12 +6,15 @@ on:
     tags:
       - "*"
 
-env:
-  MOZBUILD_PATH: ${{ github.workspace }}/.mozbuild
-
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [linux, windows, macos]
+    permissions:
+      contents: write
+
     steps:
       - name: Maximize build space
         uses: AdityaGarg8/remove-unwanted-software@v4.1
@@ -54,8 +57,8 @@ jobs:
       - name: Restore .mozbuild cache
         uses: actions/cache/restore@v3
         with:
-          path: ${{ env.MOZBUILD_PATH }}
-          key: ${{ runner.os }}-mozbuild-always
+          path: ~/.mozbuild
+          key: mozbuild-${{ matrix.target }}
 
       - name: Setup and bootstrap
         run: |
@@ -63,38 +66,39 @@ jobs:
           make mozbootstrap
           mkdir -p dist
 
-      - name: Build Linux
-        run: python3 ./multibuild.py --target linux --arch x86_64
+      - name: List .mozbuild contents
+        run: |
+          ls -R ~/.mozbuild
+
+      - name: Build
+        run: python3 ./multibuild.py --target ${{ matrix.target }} --arch x86_64
 
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
         with:
-          path: ${{ env.MOZBUILD_PATH }}
-          key: ${{ runner.os }}-mozbuild-always
+          path: ~/.mozbuild
+          key: mozbuild-${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: CamoufoxBuilds
+          name: CamoufoxBuilds-${{ matrix.target }}
           path: dist/*
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
           draft: true
           prerelease: false
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*
-          asset_name: CamoufoxBuilds
-          asset_content_type: application/zip
