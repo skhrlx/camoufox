@@ -96,7 +96,7 @@ jobs:
           free -h
 
       - name: Build
-        run: python3 ./multibuild.py --target ${{ matrix.target }} --arch x86_64
+        run: python3 ./multibuild.py --target ${{ matrix.target }} --arch x86_64 i686 arm64
 
       - name: Save .mozbuild cache
         uses: actions/cache/save@v3
